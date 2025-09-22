@@ -4,24 +4,23 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Movimiento")]
-    public float moveSpeed = 5f;
+    [Header("Movement")]
+    [SerializeField] private float moveSpeed = 5f;
 
     // Dash 
     [Header("Dash")]
-    public float dashSpeed = 12f;        
-    public float dashDuration = 0.15f;   
-    public float dashCooldown = 0.5f;   
+    [SerializeField] private float dashSpeed = 12f;
+    [SerializeField] private float dashDuration = 0.15f;
+    [SerializeField] private float dashCooldown = 0.5f;
 
     private bool isDashing = false;      // Animation and logic
     private float dashTimer = 0f;
     private float dashCooldownTimer = 0f;
     private Vector2 dashDir = Vector2.zero;
-    // =======================
 
     private Rigidbody2D rb;
     private Animator animator;
-    private Vector2 moveInput; // Dirección de movimiento
+    private Vector2 moveInput; // Movement vector
     private bool isMoving = false;
 
     private void Awake()
@@ -31,21 +30,20 @@ public class PlayerMovement : MonoBehaviour
 
         if (animator == null)
         {
-            Debug.LogWarning("No se encontró componente Animator en " + gameObject.name);
+            Debug.LogWarning("Animator component not found on " + gameObject.name);
         }
     }
 
-    // Input de movimiento (WASD / flechas / stick)
-    public void OnMove(InputAction.CallbackContext context)
+    // Movement input (WASD / arrows / stick)
+    private void OnMove(InputAction.CallbackContext context)
     {
         moveInput = context.ReadValue<Vector2>();
         isMoving = moveInput.sqrMagnitude > 0.0001f;
         UpdateAnimation();
     }
 
-    // ===== NUEVO: Input de Dash (Space) =====
-    // Creá una Action "Dash" (Button) con binding Space en tu Input Actions.
-    public void OnDash(InputAction.CallbackContext context)
+    // Create an Action "Dash" (Button) with Space binding in your Input Actions.
+    private void OnDash(InputAction.CallbackContext context)
     {
         if (!context.started) return;
         TryStartDash();
@@ -56,7 +54,7 @@ public class PlayerMovement : MonoBehaviour
         if (isDashing) return;
         if (dashCooldownTimer > 0f) return;
 
-        // Dirección del dash: si hay input, esa; si no, por defecto arriba
+        // Dash direction: if there is input, use that; otherwise, default is up
         Vector2 dir = isMoving ? moveInput.normalized : Vector2.up;
         if (dir.sqrMagnitude < 0.0001f) return;
 
@@ -65,19 +63,18 @@ public class PlayerMovement : MonoBehaviour
         dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
 
-        // Fijamos el LookState a la dirección del dash (para animación direccional)
+        // Set LookState to dash direction (for directional animation)
         int dashLook = DirToLookState(dashDir);
         if (animator != null)
         {
-            animator.SetBool("IsDashing", true); // <- NUEVO: parámetro bool
+            animator.SetBool("IsDashing", true); 
             animator.SetInteger("LookState", dashLook);
         }
     }
-    // ========================================
 
     private void Update()
     {
-        // Timers de cooldown/duración del dash
+        // Dash cooldown/duration timers
         if (dashCooldownTimer > 0f)
             dashCooldownTimer -= Time.deltaTime;
 
@@ -87,7 +84,7 @@ public class PlayerMovement : MonoBehaviour
             if (dashTimer <= 0f)
             {
                 isDashing = false;
-                if (animator != null) animator.SetBool("IsDashing", false); // <- vuelve a false al terminar
+                if (animator != null) animator.SetBool("IsDashing", false); // <- back to false when finished
             }
         }
     }
@@ -96,13 +93,13 @@ public class PlayerMovement : MonoBehaviour
     {
         if (isDashing)
         {
-            // Movimiento durante el dash (solo en la dir del dash)
+            // Movement during dash (only in dash direction)
             Vector2 newPos = rb.position + dashDir * dashSpeed * Time.fixedDeltaTime;
             rb.MovePosition(newPos);
             return;
         }
 
-        // Movimiento normal
+        // Normal movement
         Vector2 newPos2 = rb.position + moveInput * moveSpeed * Time.fixedDeltaTime;
         rb.MovePosition(newPos2);
     }
@@ -111,7 +108,7 @@ public class PlayerMovement : MonoBehaviour
     {
         if (animator == null) return;
 
-        // Si no hay movimiento y no estamos dashing => AFK
+        // If no movement and not dashing => AFK
         if (!isMoving && !isDashing)
         {
             animator.SetBool("IsMoving", false);
@@ -119,21 +116,17 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
-        // Mantener "en movimiento" mientras hay input o dash
+        // Keep "in movement" while there is input or dash
         animator.SetBool("IsMoving", isMoving || isDashing);
 
-        // Si estamos dashing, el LookState YA se fijó con dashDir.
+        // If we are dashing, LookState is already set with dashDir
         if (isDashing) return;
 
-        // Si no estamos dashing, calculamos LookState por el input actual
+        // If we are not dashing, calculate LookState from current input
         int lookState = DirToLookState(moveInput);
         animator.SetInteger("LookState", lookState);
     }
 
-    // ===== NUEVO: helper para mapear dirección → LookState =====
-    // Mapea igual que venías usando:
-    // 1=Up, 2=Down, 3=LeftUp, 4=LeftDown, 5=RightUp, 6=RightDown
-    // (además A sola -> 4, D sola -> 6 como pediste antes)
     private int DirToLookState(Vector2 dir)
     {
         if (dir.sqrMagnitude < 0.0001f) return 0;
@@ -145,8 +138,8 @@ public class PlayerMovement : MonoBehaviour
         if (angle <= -112.5f && angle > -157.5f) return 4;       // LeftDown
         if (angle >= 22.5f && angle < 67.5f) return 5;           // RightUp
         if (angle <= -22.5f && angle > -67.5f) return 6;         // RightDown
-        if (angle > 157.5f || angle <= -157.5f) return 4;        // A sola
-        if (angle >= -22.5f && angle < 22.5f) return 6;          // D sola
+        if (angle > 157.5f || angle <= -157.5f) return 4;        // A alone
+        if (angle >= -22.5f && angle < 22.5f) return 6;          // D alone
         return 0;
     }
     // =========================================
