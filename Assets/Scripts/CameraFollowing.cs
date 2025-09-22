@@ -1,67 +1,48 @@
 using UnityEngine;
-using System.Collections;
 
 public class CameraFollowing : MonoBehaviour
 {
     [Header("Follow Settings")]
-    public Transform player;
-    public Vector3 offset = new Vector3(0, 0, -10);
-    public Vector2 deadZoneSize = new Vector2(2f, 1f);
+    public Transform player;                       // A quién seguir
+    public Vector3 offset = new Vector3(0, 0, -10); // Distancia cámara–player (z negativo en 2D)
+    public Vector2 deadZoneSize = new Vector2(2f, 1f); // Ancho/alto de la “zona muerta”
 
-    [Header("Shake Settings")]
-    public AnimationCurve shakeFalloff = AnimationCurve.EaseInOut(0, 1, 1, 0);
-    public float defaultShakeDuration = 0.2f;
-    public float defaultShakeMagnitude = 0.3f;
+    private Vector3 currentTarget; // Centro de la dead-zone (en mundo)
 
-    private Vector3 shakeOffset;
-    private Vector3 currentTarget;
+    void Start()
+    {
+        // Al iniciar, centra la dead-zone sobre el jugador (si existe)
+        currentTarget = player ? (Vector3)player.position : transform.position - offset;
+    }
 
     void LateUpdate()
     {
         if (player == null) return;
 
-        // Dead zone horizontal
-        float leftLimit = currentTarget.x - deadZoneSize.x / 2;
-        float rightLimit = currentTarget.x + deadZoneSize.x / 2;
-        if (player.position.x < leftLimit) currentTarget.x = player.position.x + deadZoneSize.x / 2;
-        else if (player.position.x > rightLimit) currentTarget.x = player.position.x - deadZoneSize.x / 2;
+        // Límites horizontales de la dead-zone
+        float leftLimit = currentTarget.x - deadZoneSize.x * 0.5f;
+        float rightLimit = currentTarget.x + deadZoneSize.x * 0.5f;
 
-        // Dead zone vertical
-        float bottomLimit = currentTarget.y - deadZoneSize.y / 2;
-        float topLimit = currentTarget.y + deadZoneSize.y / 2;
-        if (player.position.y < bottomLimit) currentTarget.y = player.position.y + deadZoneSize.y / 2;
-        else if (player.position.y > topLimit) currentTarget.y = player.position.y - deadZoneSize.y / 2;
+        // Si el player sale por izquierda/derecha, movemos el centro de la dead-zone
+        if (player.position.x < leftLimit)
+            currentTarget.x = player.position.x + deadZoneSize.x * 0.5f;
+        else if (player.position.x > rightLimit)
+            currentTarget.x = player.position.x - deadZoneSize.x * 0.5f;
 
-        // Posición final = offset + shake
-        transform.position = currentTarget + offset + shakeOffset;
-    }
+        // Límites verticales de la dead-zone
+        float bottomLimit = currentTarget.y - deadZoneSize.y * 0.5f;
+        float topLimit = currentTarget.y + deadZoneSize.y * 0.5f;
 
-    public void Shake(float duration, float magnitude)
-    {
-        StopAllCoroutines();
-        StartCoroutine(DoShake(duration, magnitude));
-    }
+        // Si el player sale por abajo/arriba, movemos el centro de la dead-zone
+        if (player.position.y < bottomLimit)
+            currentTarget.y = player.position.y + deadZoneSize.y * 0.5f;
+        else if (player.position.y > topLimit)
+            currentTarget.y = player.position.y - deadZoneSize.y * 0.5f;
 
-    public void ShakeDefault()
-    {
-        Shake(defaultShakeDuration, defaultShakeMagnitude);
-    }
+        // Posición final: centro de la dead-zone + offset (sin temblor)
+        transform.position = currentTarget + offset;
 
-    IEnumerator DoShake(float duration, float magnitude)
-    {
-        float elapsed = 0f;
-        while (elapsed < duration)
-        {
-            float strength = shakeFalloff.Evaluate(elapsed / duration);
-            shakeOffset = new Vector3(
-                Random.Range(-1f, 1f) * magnitude * strength,
-                Random.Range(-1f, 1f) * magnitude * strength,
-                0
-            );
-
-            elapsed += Time.deltaTime;
-            yield return null;
-        }
-        shakeOffset = Vector3.zero;
+        // (Opcional: suavizado)
+        // transform.position = Vector3.Lerp(transform.position, currentTarget + offset, 0.15f);
     }
 }
