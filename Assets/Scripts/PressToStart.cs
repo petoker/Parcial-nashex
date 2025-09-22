@@ -5,13 +5,13 @@ using System.Collections;
 public class PressToStart : MonoBehaviour
 {
     [Header("UI")]
-    public CanvasGroup overlay;                 // CanvasGroup of the black Panel
+    [SerializeField] private CanvasGroup overlay;                 // CanvasGroup of the black Panel
     [Range(0.5f, 0.8f)]
-    public float overlayOpacity = 0.6f;         // 50–80 % as requested in the assignment
+    [SerializeField] private float overlayOpacity = 0.6f;         // 50–80 % as requested in the assignment
 
     [Header("Fade")]
     public bool fadeOut = true;
-    public float fadeOutDuration = 0.25f;       // uses UNscaled time
+    [SerializeField] private float fadeOutDuration = 0.25f;       // uses UNscaled time
 
     [Header("Input")]
     public InputActionReference startAction;    // ← drag your "StartGame" action here

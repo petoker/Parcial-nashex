@@ -4,8 +4,8 @@ public class CameraFollowing : MonoBehaviour
 {
     [Header("Follow Settings")]
     public Transform player;                        // Follow player
-    public Vector3 offset = new Vector3(0, 0, -10); // Distance camera-player
-    public Vector2 deadZoneSize = new Vector2(2f, 1f); // Width/height of the “dead zone”
+    [SerializeField] private Vector3 offset = new Vector3(0, 0, -10); // Distance camera-player
+    [SerializeField] private Vector2 deadZoneSize = new Vector2(2f, 1f); // Width/height of the “dead zone”
 
     private Vector3 currentTarget; // Center of the dead-zone (in world space)
 
